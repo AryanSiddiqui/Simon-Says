@@ -1,0 +1,147 @@
+import random
+import time
+import turtle
+
+# Set up the screen
+turtle.bgcolor("black")
+turtle.setup(width=600, height=600)
+turtle.hideturtle()
+turtle.speed(0)
+
+# Create a dictionary for color mapping
+colors = {'G': 'green', 'R': 'red','Y': 'yellow', 'B': 'blue',}
+light_colors = {'R': '#ff9999', 'G': '#99ff99', 'B': '#9999ff', 'Y': '#ffff99'}
+button_positions = {}
+user_sequence = []
+sequence = []
+waiting_for_input = False
+score = 0
+speed_multiplier = 1.0 # Controls game speed, doubles every 5 levels
+
+def generate_random_positions():
+  """Generates random positions."""
+  positions = [(x, y) for x in [-120, 20] for y in [120, -20]]
+  random.shuffle(positions)
+  return {color: positions[i] for i, color in enumerate(colors.keys())}
+  def draw_button(color, x, y):
+  turtle.penup()
+  turtle.goto(x, y)
+  turtle.pendown()
+  turtle.color(color)
+  turtle.begin_fill()
+
+for _ in range(4):
+  turtle.forward(100)
+  turtle.right(90)
+  turtle.end_fill()
+  def setup_buttons():
+  global button_positions
+  button_positions = generate_random_positions()
+
+for color, (x, y) in button_positions.items():
+  draw_button(colors[color], x, y)
+
+def flash_button(color):
+  """Flashes the button and resets it back."""
+  x, y = button_positions[color]
+  turtle.penup()
+  turtle.goto(x, y)
+  turtle.pendown()
+  turtle.color(light_colors[color])
+  turtle.begin_fill()
+
+for _ in range(4):
+  turtle.forward(100)
+  turtle.right(90)
+  turtle.end_fill()
+  time.sleep(0.5 / speed_multiplier) # Adjusted by speed multiplier
+  draw_button(colors[color], x, y) # Reset to original color
+  time.sleep(0.2 / speed_multiplier) # Adjusted by speed multiplier
+
+def display_sequence(sequence):
+  "Shows the sequence to the player."
+  global waiting_for_input
+  update_status("Watch the sequence...")
+  waiting_for_input = False
+  for color in sequence:
+  flash_button(color)
+  waiting_for_input = True
+
+def update_score():
+  "Clear and update the score display in the top right."
+  turtle.penup()
+  turtle.goto(200, 250)
+  turtle.pendown()
+  turtle.pencolor("Black")
+  turtle.pensize(80)
+  turtle.circle(30, 360) # Cover old score
+  turtle.pensize(3)
+  turtle.color("white")
+  turtle.write(f"Score: {score}", align="right", font=("Arial", 16, "bold"))
+
+def update_status(message):
+  "Clear and update the game status in the top left."
+  turtle.penup()
+  turtle.goto(-250, 250)
+  turtle.pendown()
+  turtle.pencolor("black")
+  turtle.pensize(330)
+  turtle.circle(30, 360) # Cover old text
+  turtle.pensize(3)
+  turtle.color("white")
+  turtle.write(message, align="left", font=("Arial", 16, "bold"))
+def check_user_input():
+  "Checks the user's input against the sequence."
+  global waiting_for_input, user_sequence, sequence, score
+  if user_sequence == sequence:
+    update_status("Next Level!")
+    score += 1
+    update_score()
+    time.sleep(1 / speed_multiplier) # Adjusted for speed
+    user_sequence = []
+    waiting_for_input = False
+    next_level()
+  elif len(user_sequence) > len(sequence) or user_sequence != sequence[:len(user_sequence)]:
+    update_status("Game Over!")
+    print(f"You reached Level {len(sequence)}")
+    turtle.done()
+  def on_click(x, y):
+    "Takes in user input and translate it into an action."
+    global user_sequence, waiting_for_input
+    if not waiting_for_input:
+    return
+
+for color, (bx, by) in button_positions.items():
+  if bx <= x <= bx + 100 and by - 100 <= y <= by:
+  flash_button(color)
+  user_sequence.append(color)
+  check_user_input()
+  break
+def next_level():
+  "Moves to the next level and increases speed every 5 levels."
+  global sequence, speed_multiplier
+  sequence.append(random.choice(['R', 'G', 'B', 'Y']))
+  # Increase speed every 5 levels
+  if len(sequence) % 5 == 0:
+  speed_multiplier *= 2
+  update_status(f"Speed Up! Level {len(sequence)}")
+  setup_buttons() # Randomize button positions each level
+  update_score()
+  time.sleep(1 / speed_multiplier) # Adjusted for speed
+  display_sequence(sequence)
+def play_simon():
+  "Starts the Simon game."
+  global score
+  print("Memorize the sequence and repeat it by clicking the colors in the same pattern.")
+  score = 0
+  setup_buttons()
+  update_score()
+  update_status("Game Start!")
+  time.sleep(1)
+  next_level()
+# Set up click event
+turtle.onscreenclick(on_click)
+# Start game
+if __name__ == "__main__":
+  play_simon()
+  turtle.mainloop()
